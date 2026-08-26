@@ -397,16 +397,13 @@ app.post('/api/contacts/import', requireAuth, async (req, res) => {
   }
 
   try {
-    db.serialize(async () => {
-      const stmt = db.prepare(
+    const promises = contacts.map(c => {
+      const id = 'c_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+      const createdAt = new Date().toISOString();
+      return dbRun(
         `INSERT INTO contacts (id, name, company, niche, phone, email, address, notes, status, nextFollowUp, createdAt)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-      );
-
-      contacts.forEach(c => {
-        const id = 'c_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
-        const createdAt = new Date().toISOString();
-        stmt.run([
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
           id,
           (c.name || 'Unnamed').trim(),
           c.company || '',
@@ -418,16 +415,16 @@ app.post('/api/contacts/import', requireAuth, async (req, res) => {
           c.status || 'new',
           c.nextFollowUp || null,
           createdAt
-        ]);
-      });
-
-      stmt.finalize();
-
-      await logActivity(req.user.name, 'Imported contacts', `${contacts.length} contacts`);
-      res.json({ success: true, count: contacts.length });
+        ]
+      );
     });
+
+    await Promise.all(promises);
+
+    await logActivity(req.user.name, 'Imported contacts', `${contacts.length} contacts`);
+    res.json({ success: true, count: contacts.length });
   } catch (err) {
-    console.error(err);
+    console.error('Import error:', err);
     res.status(500).json({ error: 'Failed to import contacts.' });
   }
 });
