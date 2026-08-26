@@ -1,0 +1,1588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Callboard CRM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --surface-2: #f1f5f9;
+      --surface-3: #e2e8f0;
+      --border: #cbd5e1;
+      --text: #0f172a;
+      --text-muted: #475569;
+      --text-dim: #94a3b8;
+      
+      --amber: #d97706;
+      --amber-dim: rgba(217, 119, 6, 0.08);
+      --green: #16a34a;
+      --green-dim: rgba(22, 163, 74, 0.08);
+      --red: #dc2626;
+      --red-dim: rgba(220, 38, 38, 0.08);
+      --blue: #2563eb;
+      --blue-dim: rgba(37, 99, 235, 0.08);
+      --gray: #64748b;
+      --gray-dim: rgba(100, 116, 139, 0.08);
+
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+      --radius: 8px;
+      --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    #callboard-root {
+      font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    #callboard-root * { box-sizing: border-box; }
+    #callboard-root .mono {
+      font-family: "JetBrains Mono", ui-monospace, monospace;
+      font-weight: 500;
+    }
+    #callboard-root button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: inherit;
+    }
+    #callboard-root input, #callboard-root select, #callboard-root textarea {
+      font-family: inherit;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 8px 12px;
+      font-size: 13px;
+      outline: none;
+      transition: var(--transition);
+    }
+    #callboard-root input:focus, #callboard-root select:focus, #callboard-root textarea:focus {
+      border-color: var(--amber);
+      box-shadow: 0 0 0 3px var(--amber-dim);
+    }
+    #callboard-root ::-webkit-scrollbar { width: 6px; height: 6px; }
+    #callboard-root ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    #callboard-root ::-webkit-scrollbar-track { background: transparent; }
+
+    /* Header */
+    #cb-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--surface-3);
+      background: var(--surface);
+      flex-shrink: 0;
+      box-shadow: var(--shadow-sm);
+    }
+    #cb-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: "Outfit", sans-serif;
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: -0.5px;
+      white-space: nowrap;
+      color: var(--text);
+    }
+    #cb-logo .dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--amber);
+      box-shadow: 0 0 0 4px var(--amber-dim);
+    }
+    #cb-search {
+      flex: 1;
+      max-width: 360px;
+    }
+    #cb-search input {
+      width: 100%;
+      background: var(--surface-2);
+      border-color: transparent;
+    }
+    #cb-search input:focus {
+      background: var(--surface);
+      border-color: var(--amber);
+    }
+    .cb-stats-strip {
+      display: flex;
+      gap: 20px;
+      margin-left: auto;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .cb-stats-strip b { color: var(--text); font-weight: 700; }
+    .cb-header-actions { display: flex; gap: 8px; align-items: center; }
+    .cb-btn {
+      padding: 8px 14px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+    .cb-btn:hover {
+      background: var(--surface-2);
+      border-color: var(--text-dim);
+    }
+    .cb-btn-primary {
+      background: var(--amber);
+      color: #FFFFFF;
+      border-color: var(--amber);
+    }
+    .cb-btn-primary:hover {
+      background: #b45309;
+      border-color: #b45309;
+      box-shadow: 0 2px 4px rgba(217, 119, 6, 0.2);
+    }
+    .cb-btn-ghost { border-color: transparent; color: var(--text-muted); }
+    .cb-btn-ghost:hover { color: var(--text); background: var(--surface-2); }
+
+    /* Body layout */
+    #cb-body {
+      flex: 1;
+      display: flex;
+      min-height: 0;
+    }
+
+    /* Sidebar */
+    #cb-sidebar {
+      width: 260px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--surface-3);
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 16px 12px;
+    }
+    .cb-sidebar-label {
+      font-family: "Outfit", sans-serif;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      padding: 8px 12px;
+      font-weight: 700;
+    }
+    .cb-filter-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 9px 12px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      margin-bottom: 3px;
+      font-size: 13.5px;
+      font-weight: 500;
+      transition: var(--transition);
+      color: var(--text-muted);
+    }
+    .cb-filter-row:hover { background: var(--surface-2); color: var(--text); }
+    .cb-filter-row.active { background: var(--amber-dim); color: var(--amber); }
+    .cb-filter-row .cb-frow-left { display: flex; align-items: center; gap: 10px; overflow: hidden; }
+    .cb-filter-row .cb-frow-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cb-filter-row .cb-frow-count {
+      font-size: 11px;
+      color: var(--text-dim);
+      font-family: "JetBrains Mono", monospace;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .cb-filter-row.active .cb-frow-count { color: var(--amber); }
+    .cb-signal { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .cb-niche-bar {
+      height: 4px;
+      border-radius: 2px;
+      background: var(--surface-2);
+      margin: 0 12px 10px;
+      overflow: hidden;
+    }
+    .cb-niche-bar-fill { height: 100%; background: var(--amber); border-radius: 2px; transition: width 0.3s ease; }
+    #cb-niche-list { margin-top: 4px; }
+
+    /* Main */
+    #cb-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      overflow: hidden;
+      background: var(--surface);
+    }
+    #cb-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--surface-3);
+      flex-shrink: 0;
+    }
+    #cb-toolbar .cb-toolbar-title { font-family: "Outfit", sans-serif; font-weight: 700; font-size: 18px; color: var(--text); }
+    #cb-toolbar .cb-toolbar-sub { color: var(--text-muted); font-size: 13px; font-weight: 500; }
+    .cb-status-chip {
+      padding: 6px 12px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-muted);
+      transition: var(--transition);
+    }
+    .cb-status-chip:hover { border-color: var(--text-dim); background: var(--surface-2); }
+    .cb-status-chip.active { background: var(--amber); color: #FFFFFF; border-color: var(--amber); }
+
+    #cb-table-wrap { flex: 1; overflow-y: auto; background: var(--bg); }
+    table#cb-table { width: 100%; border-collapse: collapse; background: var(--surface); }
+    #cb-table thead th {
+      position: sticky; top: 0;
+      background: var(--surface-2);
+      text-align: left;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--surface-3);
+      font-weight: 700;
+      z-index: 1;
+    }
+    #cb-table tbody tr {
+      cursor: pointer;
+      border-bottom: 1px solid var(--surface-2);
+      transition: var(--transition);
+    }
+    #cb-table tbody tr:hover { background: var(--surface-2); }
+    #cb-table tbody tr.selected { background: var(--amber-dim); }
+    #cb-table td { padding: 12px 18px; vertical-align: middle; }
+    .cb-name-cell { font-weight: 600; color: var(--text); }
+    .cb-company-cell { color: var(--text-muted); font-size: 13px; }
+    .cb-niche-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: var(--surface-2);
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .cb-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 100px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .cb-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--text-dim);
+      gap: 12px;
+      padding: 40px;
+      text-align: center;
+      background: var(--surface);
+    }
+    .cb-empty b { color: var(--text-muted); font-size: 16px; font-weight: 700; }
+    
+    /* Drawer */
+    #cb-drawer {
+      width: 420px;
+      flex-shrink: 0;
+      border-left: 1px solid var(--surface-3);
+      background: var(--surface);
+      display: none;
+      flex-direction: column;
+      overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+    }
+    #cb-drawer.open { display: flex; }
+    .cb-drawer-head {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--surface-3);
+      background: var(--surface-2);
+    }
+    .cb-drawer-head .cb-dh-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .cb-drawer-name { font-family: "Outfit", sans-serif; font-size: 18px; font-weight: 700; color: var(--text); }
+    .cb-drawer-sub { color: var(--text-muted); font-size: 13px; margin-top: 3px; font-weight: 500; }
+    .cb-drawer-section { padding: 20px 24px; border-bottom: 1px solid var(--surface-3); }
+    .cb-drawer-label {
+      font-family: "Outfit", sans-serif;
+      font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px;
+      color: var(--text-dim); font-weight: 700; margin-bottom: 12px;
+    }
+    .cb-field-row { display: flex; align-items: center; gap: 10px; font-size: 13.5px; margin-bottom: 10px; color: var(--text); }
+    .cb-field-row .cb-field-ico { width: 16px; color: var(--text-dim); flex-shrink: 0; text-align: center; font-size: 14px; }
+    .cb-select-full { width: 100%; }
+    .cb-log-item {
+      padding: 10px 12px;
+      background: var(--surface-2);
+      border-radius: var(--radius);
+      margin-bottom: 8px;
+      font-size: 13px;
+      border: 1px solid var(--surface-3);
+    }
+    .cb-log-item .cb-log-top { display: flex; justify-content: space-between; margin-bottom: 4px; }
+    .cb-log-item .cb-log-date { color: var(--text-dim); font-family: "JetBrains Mono", monospace; font-size: 10.5px; }
+    .cb-log-item .cb-log-note { color: var(--text-muted); margin-top: 4px; line-height: 1.4; }
+    #cb-drawer textarea { width: 100%; resize: vertical; min-height: 60px; margin-top: 8px; }
+    .cb-drawer-close { color: var(--text-dim); font-size: 20px; padding: 4px 8px; border-radius: 6px; transition: var(--transition); }
+    .cb-drawer-close:hover { background: var(--surface-3); color: var(--text); }
+
+    /* Modals & Overlays */
+    #cb-modal-overlay, .cb-admin-overlay-style {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4);
+      backdrop-filter: blur(4px);
+      display: none; align-items: center; justify-content: center; z-index: 50;
+      transition: var(--transition);
+    }
+    #cb-modal-overlay.open, .cb-admin-overlay-style.open { display: flex; }
+    #cb-modal, #cb-admin-modal {
+      width: 580px; max-height: 85vh; overflow-y: auto;
+      background: var(--surface); border: 1px solid var(--surface-3); border-radius: 12px;
+      padding: 24px;
+      box-shadow: var(--shadow-lg);
+      animation: cb-slide-up 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes cb-slide-up {
+      from { transform: translateY(10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    #cb-modal h3, #cb-admin-modal h3 { margin: 0 0 6px; font-family: "Outfit", sans-serif; font-size: 18px; font-weight: 700; }
+    #cb-modal .cb-modal-sub, .cb-modal-sub { color: var(--text-muted); font-size: 13px; margin-bottom: 18px; }
+    .cb-map-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .cb-map-row label { width: 110px; flex-shrink: 0; font-size: 13px; color: var(--text-muted); font-weight: 600; }
+    .cb-map-row select { flex: 1; }
+    #cb-drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 32px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13.5px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-bottom: 16px;
+      transition: var(--transition);
+    }
+    #cb-drop-zone:hover { border-color: var(--amber); color: var(--text); background: var(--surface-2); }
+    #cb-drop-zone.dragover { border-color: var(--amber); background: var(--amber-dim); }
+
+    .cb-toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: var(--text); color: var(--surface);
+      padding: 10px 20px; border-radius: 100px; font-size: 13px; font-weight: 600; z-index: 100;
+      box-shadow: var(--shadow-lg);
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    .cb-toast.show { opacity: 1; }
+
+    @keyframes cb-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.4); }
+      50% { box-shadow: 0 0 0 5px rgba(217, 119, 6, 0); }
+    }
+    .cb-signal.pulse { animation: cb-pulse 1.8s infinite; }
+
+    /* Login screen */
+    #cb-login-screen {
+      position: fixed; inset: 0; background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 200;
+    }
+    #cb-login-screen.hidden { display: none; }
+    .cb-login-card {
+      width: 360px; background: var(--surface); border: 1px solid var(--surface-3);
+      border-radius: 16px; padding: 32px 28px;
+      box-shadow: var(--shadow-lg);
+    }
+    .cb-login-logo { display: flex; align-items: center; gap: 10px; font-family: "Outfit", sans-serif; font-weight: 800; font-size: 22px; margin-bottom: 6px; color: var(--text); }
+    .cb-login-logo .dot { width: 11px; height: 11px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 0 4px var(--amber-dim); }
+    .cb-login-sub { color: var(--text-muted); font-size: 13px; margin-bottom: 24px; line-height: 1.4; }
+    .cb-login-field { margin-bottom: 16px; }
+    .cb-login-field label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
+    .cb-login-field input { width: 100%; }
+    .cb-login-error { color: var(--red); font-size: 12.5px; margin-bottom: 12px; min-height: 0; font-weight: 500; }
+    .cb-login-toggle { text-align: center; margin-top: 16px; font-size: 13px; color: var(--text-muted); }
+    .cb-login-toggle a { color: var(--amber); cursor: pointer; font-weight: 600; text-decoration: none; }
+    .cb-login-toggle a:hover { text-decoration: underline; }
+
+    /* User badge + admin */
+    #cb-user-badge {
+      display: flex; align-items: center; gap: 10px;
+      padding: 6px 14px 6px 6px;
+      border-radius: 100px;
+      background: var(--surface-2);
+      font-size: 13px;
+      white-space: nowrap;
+      border: 1px solid var(--surface-3);
+    }
+    #cb-user-badge .cb-avatar {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: var(--amber); color: #fff; font-weight: 800; font-size: 11px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      font-family: "Outfit", sans-serif;
+    }
+    #cb-user-badge .cb-role-tag {
+      font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px;
+      color: var(--text-dim); font-weight: 800;
+    }
+    .cb-admin-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    .cb-admin-table th {
+      text-align: left; font-size: 11px; text-transform: uppercase; color: var(--text-muted);
+      padding: 8px 10px; border-bottom: 1px solid var(--surface-3); font-weight: 700;
+    }
+    .cb-admin-table td { padding: 10px; border-bottom: 1px solid var(--surface-2); font-size: 13px; vertical-align: middle; }
+    .cb-role-pill {
+      font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 100px;
+      background: var(--amber-dim); color: var(--amber); text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .cb-role-pill.caller { background: var(--blue-dim); color: var(--blue); }
+    .cb-inline-btn { font-size: 11.5px; font-weight: 600; padding: 5px 10px; border-radius: var(--radius); background: var(--surface-2); margin-right: 4px; transition: var(--transition); }
+    .cb-inline-btn:hover { background: var(--surface-3); }
+    .cb-admin-tabs { display: flex; gap: 16px; margin-bottom: 16px; border-bottom: 1px solid var(--surface-3); }
+    .cb-admin-tab { padding: 8px 4px; font-size: 13.5px; font-weight: 600; color: var(--text-muted); border-bottom: 2px solid transparent; cursor: pointer; transition: var(--transition); }
+    .cb-admin-tab:hover { color: var(--text); }
+    .cb-admin-tab.active { color: var(--amber); border-bottom-color: var(--amber); }
+    .cb-activity-item { padding: 10px 0; border-bottom: 1px solid var(--surface-2); font-size: 13px; }
+    .cb-activity-item .cb-act-meta { color: var(--text-dim); font-size: 11px; margin-top: 3px; font-family: "JetBrains Mono", monospace; }
+  </style>
+</head>
+<body>
+
+<div id="cb-login-screen">
+  <div class="cb-login-card" id="cb-login-card"></div>
+</div>
+
+<div id="callboard-root">
+  <div id="cb-header">
+    <div id="cb-logo"><span class="dot"></span>Callboard</div>
+    <div id="cb-search"><input id="cb-search-input" placeholder="Search name, company, phone…" /></div>
+    <div class="cb-stats-strip" id="cb-stats-strip"></div>
+    <div class="cb-header-actions">
+      <button class="cb-btn cb-btn-ghost" id="cb-export-btn">Export CSV</button>
+      <button class="cb-btn cb-btn-primary" id="cb-import-btn">Import CSV</button>
+      <button class="cb-btn cb-btn-primary" id="cb-add-contact-btn">+ Add Contact</button>
+      <button class="cb-btn cb-btn-ghost" id="cb-admin-btn" style="display:none;">Admin Settings</button>
+      <div id="cb-user-badge"></div>
+    </div>
+  </div>
+
+  <div id="cb-body">
+    <div id="cb-sidebar">
+      <div class="cb-sidebar-label">Queue</div>
+      <div id="cb-queue-list"></div>
+      <div class="cb-sidebar-label" style="margin-top:16px;">Niches</div>
+      <div id="cb-niche-list"></div>
+    </div>
+
+    <div id="cb-main">
+      <div id="cb-toolbar">
+        <div>
+          <div class="cb-toolbar-title" id="cb-toolbar-title">All Contacts</div>
+          <div class="cb-toolbar-sub" id="cb-toolbar-sub"></div>
+        </div>
+        <div style="margin-left:auto; display:flex; gap:8px;" id="cb-status-filters"></div>
+      </div>
+      <div id="cb-table-wrap"></div>
+    </div>
+
+    <div id="cb-drawer"></div>
+  </div>
+</div>
+
+<div id="cb-modal-overlay">
+  <div id="cb-modal"></div>
+</div>
+
+<div id="cb-admin-overlay" class="cb-admin-overlay-style">
+  <div id="cb-admin-modal"></div>
+</div>
+
+<div class="cb-toast" id="cb-toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script>
+(function() {
+  const STATUS_META = {
+    new:            { label: "New",          color: "var(--gray)",  dim: "var(--gray-dim)"  },
+    attempted:      { label: "Attempted",    color: "var(--amber)", dim: "var(--amber-dim)" },
+    connected:      { label: "Connected",    color: "var(--blue)",  dim: "var(--blue-dim)"  },
+    interested:     { label: "Interested",   color: "var(--green)", dim: "var(--green-dim)" },
+    not_interested: { label: "Not Interested", color: "var(--red)",   dim: "var(--red-dim)"   },
+    converted:      { label: "Converted",    color: "var(--green)", dim: "var(--green-dim)" },
+    do_not_call:    { label: "Do Not Call",  color: "var(--red)",   dim: "var(--red-dim)"   },
+  };
+  const OUTCOME_OPTIONS = ["No Answer", "Voicemail", "Connected", "Interested", "Not Interested", "Callback Requested", "Wrong Number", "Do Not Call"];
+  const CHANNEL_OPTIONS = ["Call", "Email", "LinkedIn", "Text"];
+  const CHANNEL_OUTCOMES = {
+    "Call": ["No Answer", "Voicemail", "Connected", "Interested", "Not Interested", "Callback Requested", "Wrong Number", "Do Not Call"],
+    "Email": ["Sent", "Opened", "Replied", "Interested", "Not Interested", "Bounced"],
+    "LinkedIn": ["Connection Sent", "Connected", "Message Replied", "Interested", "Not Interested"],
+    "Text": ["Sent", "Replied", "No Response"],
+  };
+  const CHANNEL_ICON = { "Call": "☎", "Email": "✉", "LinkedIn": "in", "Text": "▤" };
+  const SEQUENCE_TEMPLATE = [
+    { step: 1, label: "Cold Call",       channel: "Call",     delayDays: 0 },
+    { step: 2, label: "Follow-up Email", channel: "Email",    delayDays: 0 },
+    { step: 3, label: "LinkedIn Connect",channel: "LinkedIn", delayDays: 0 },
+    { step: 4, label: "Second Call",     channel: "Call",     delayDays: 4 },
+    { step: 5, label: "Final Touch",     channel: "Call/Email", delayDays: 14 },
+  ];
+
+  let state = {
+    contacts: [],
+    selectedId: null,
+    nicheFilter: null,
+    queueFilter: null, // 'due_today' | 'overdue' | 'new'
+    statusFilter: null,
+    search: "",
+    pendingImport: null,
+    currentUser: null,
+    users: [],
+    activityLog: [],
+    loginMode: 'login',
+    adminTab: 'team',
+  };
+
+  const $ = (sel, root) => (root || document).querySelector(sel);
+  const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+
+  function todayStr() { return new Date().toISOString().slice(0, 10); }
+  function fmtDate(d) {
+    if (!d) return "—";
+    const dt = new Date(d + "T00:00:00");
+    if (isNaN(dt)) return d;
+    return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+  function fmtDateTime(iso) {
+    const dt = new Date(iso);
+    return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' · ' + dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  }
+  function sequenceProgress(c) {
+    const touches = c.calls || [];
+    const done = Math.min(touches.length, SEQUENCE_TEMPLATE.length);
+    const next = SEQUENCE_TEMPLATE[done] || null;
+    const lastTouchDate = touches.length ? new Date(touches[touches.length - 1].date) : new Date();
+    let suggestedDate = null;
+    if (next) {
+      const d = new Date(lastTouchDate);
+      d.setDate(d.getDate() + next.delayDays);
+      suggestedDate = d.toISOString().slice(0, 10);
+    }
+    return { done, next, suggestedDate };
+  }
+  function escapeHtml(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function toast(msg) {
+    const t = $('#cb-toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  // --- API HELPER FUNCTIONS ---
+
+  async function loadData() {
+    try {
+      const res = await fetch('/api/contacts', {
+        headers: { 'X-User-ID': state.currentUser ? state.currentUser.id : '' }
+      });
+      if (res.ok) {
+        state.contacts = await res.json();
+      } else {
+        const err = await res.json();
+        toast(err.error || 'Failed to load contacts');
+      }
+    } catch (e) {
+      toast('Connection error fetching contacts');
+      state.contacts = [];
+    }
+    render();
+  }
+
+  async function updateContactOnServer(contact) {
+    try {
+      const res = await fetch(`/api/contacts/${contact.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-ID': state.currentUser ? state.currentUser.id : ''
+        },
+        body: JSON.stringify(contact)
+      });
+      if (res.ok) {
+        await loadData();
+      } else {
+        const err = await res.json();
+        toast(err.error || 'Failed to update contact');
+      }
+    } catch (e) {
+      toast('Connection error updating contact');
+    }
+  }
+
+  async function createContactOnServer(contact) {
+    try {
+      const res = await fetch('/api/contacts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-ID': state.currentUser ? state.currentUser.id : ''
+        },
+        body: JSON.stringify(contact)
+      });
+      if (res.ok) {
+        toast('Contact created');
+        closeModal();
+        await loadData();
+      } else {
+        const err = await res.json();
+        toast(err.error || 'Failed to create contact');
+      }
+    } catch (e) {
+      toast('Connection error creating contact');
+    }
+  }
+
+  async function deleteContactOnServer(contactId) {
+    try {
+      const res = await fetch(`/api/contacts/${contactId}`, {
+        method: 'DELETE',
+        headers: {
+          'X-User-ID': state.currentUser ? state.currentUser.id : ''
+        }
+      });
+      if (res.ok) {
+        toast('Contact deleted');
+        state.selectedId = null;
+        await loadData();
+      } else {
+        const err = await res.json();
+        toast(err.error || 'Failed to delete contact');
+      }
+    } catch (e) {
+      toast('Connection error deleting contact');
+    }
+  }
+
+  async function importContactsOnServer(importedList) {
+    try {
+      const res = await fetch('/api/contacts/import', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-ID': state.currentUser ? state.currentUser.id : ''
+        },
+        body: JSON.stringify({ contacts: importedList })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        toast(`Imported ${data.count} contacts`);
+        closeModal();
+        await loadData();
+      } else {
+        const err = await res.json();
+        toast(err.error || 'Failed to import contacts');
+      }
+    } catch (e) {
+      toast('Connection error importing contacts');
+    }
+  }
+
+  async function logTouchOnServer(contactId, channel, outcome, notes) {
+    try {
+      const res = await fetch(`/api/contacts/${contactId}/touches`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-ID': state.currentUser ? state.currentUser.id : ''
+        },
+        body: JSON.stringify({ channel, outcome, notes })
+      });
+      if (res.ok) {
+        toast('Touch logged');
+        await loadData();
+      } else {
+        const err = await res.json();
+        toast(err.error || 'Failed to log touch');
+      }
+    } catch (e) {
+      toast('Connection error logging touch');
+    }
+  }
+
+  async function loadUsers() {
+    try {
+      const res = await fetch('/api/admin/users', {
+        headers: { 'X-User-ID': state.currentUser ? state.currentUser.id : '' }
+      });
+      if (res.ok) {
+        state.users = await res.json();
+      }
+    } catch (e) {
+      console.error('Error loading users:', e);
+    }
+  }
+
+  async function loadActivityLog() {
+    try {
+      const res = await fetch('/api/admin/activity', {
+        headers: { 'X-User-ID': state.currentUser ? state.currentUser.id : '' }
+      });
+      if (res.ok) {
+        state.activityLog = await res.json();
+      }
+    } catch (e) {
+      console.error('Error loading activity log:', e);
+    }
+  }
+
+  async function checkSession() {
+    const savedUserId = localStorage.getItem('cb-session-userid');
+    if (!savedUserId) return false;
+    try {
+      const res = await fetch('/api/auth/session', {
+        headers: { 'X-User-ID': savedUserId }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.user) {
+          state.currentUser = data.user;
+          return true;
+        }
+      }
+    } catch (e) {
+      console.error('Session check failed:', e);
+    }
+    localStorage.removeItem('cb-session-userid');
+    return false;
+  }
+
+  async function logout() {
+    try {
+      await fetch('/api/activity', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-ID': state.currentUser.id
+        },
+        body: JSON.stringify({ action: 'Logged out', detail: '' })
+      });
+    } catch (e) {}
+    localStorage.removeItem('cb-session-userid');
+    state.currentUser = null;
+    state.selectedId = null;
+    render();
+  }
+
+  async function handleAdminUserAction(action, userId) {
+    const u = state.users.find(x => x.id === userId);
+    if (!u) return;
+    let body = {};
+    if (action === 'role') {
+      body.role = u.role === 'admin' ? 'caller' : 'admin';
+    } else if (action === 'toggle-active') {
+      body.active = !u.active;
+    } else if (action === 'reset-pin') {
+      const newPin = prompt(`New PIN for ${u.name} (4+ digits):`);
+      if (!newPin || newPin.trim().length < 4) {
+        if (newPin !== null) toast('PIN must be at least 4 digits');
+        return;
+      }
+      body.pin = newPin.trim();
+    }
+
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-ID': state.currentUser.id
+        },
+        body: JSON.stringify(body)
+      });
+      if (res.ok) {
+        toast('User updated successfully');
+        await loadUsers();
+        renderAdminPanel();
+      } else {
+        const err = await res.json();
+        toast(err.error || 'Failed to update user');
+      }
+    } catch (e) {
+      toast('Connection error updating user');
+    }
+  }
+
+  // --- DERIVED DATA ---
+
+  function nicheList() {
+    const map = {};
+    state.contacts.forEach(c => {
+      const n = c.niche || "Uncategorized";
+      map[n] = (map[n] || 0) + 1;
+    });
+    return Object.keys(map).sort((a, b) => map[b] - map[a]).map(n => ({ name: n, count: map[n] }));
+  }
+  function nicheContactedRatio(niche) {
+    const list = state.contacts.filter(c => (c.niche || "Uncategorized") === niche);
+    if (!list.length) return 0;
+    const contacted = list.filter(c => c.status !== 'new').length;
+    return contacted / list.length;
+  }
+  function isOverdue(c) { return c.nextFollowUp && c.nextFollowUp < todayStr() && c.status !== 'converted' && c.status !== 'do_not_call'; }
+  function isDueToday(c) { return c.nextFollowUp === todayStr() && c.status !== 'converted' && c.status !== 'do_not_call'; }
+
+  function signalColorFor(c) {
+    if (c.status === 'do_not_call') return 'var(--gray)';
+    if (isOverdue(c)) return 'var(--red)';
+    if (isDueToday(c)) return 'var(--amber)';
+    if (c.status === 'converted' || c.status === 'interested') return 'var(--green)';
+    if (c.status === 'connected') return 'var(--blue)';
+    if (c.status === 'new') return 'var(--gray)';
+    return 'var(--gray)';
+  }
+
+  function filteredContacts() {
+    let list = state.contacts.slice();
+    if (state.nicheFilter) list = list.filter(c => (c.niche || "Uncategorized") === state.nicheFilter);
+    if (state.queueFilter === 'due_today') list = list.filter(isDueToday);
+    if (state.queueFilter === 'overdue') list = list.filter(isOverdue);
+    if (state.queueFilter === 'new') list = list.filter(c => c.status === 'new');
+    if (state.statusFilter) list = list.filter(c => c.status === state.statusFilter);
+    if (state.search.trim()) {
+      const q = state.search.trim().toLowerCase();
+      list = list.filter(c =>
+        (c.name || '').toLowerCase().includes(q) ||
+        (c.company || '').toLowerCase().includes(q) ||
+        (c.phone || '').toLowerCase().includes(q) ||
+        (c.email || '').toLowerCase().includes(q)
+      );
+    }
+    list.sort((a, b) => {
+      const rank = c => isOverdue(c) ? 0 : isDueToday(c) ? 1 : 2;
+      const ra = rank(a), rb = rank(b);
+      if (ra !== rb) return ra - rb;
+      return (a.name || '').localeCompare(b.name || '');
+    });
+    return list;
+  }
+
+  // --- RENDERING ---
+
+  function render() {
+    if (!state.currentUser) {
+      renderLoginScreen();
+      return;
+    }
+    $('#cb-login-screen').classList.add('hidden');
+    renderStatsStrip();
+    renderSidebar();
+    renderToolbar();
+    renderTable();
+    renderDrawer();
+    renderUserBadge();
+    renderAdminPanel();
+  }
+
+  function renderLoginScreen() {
+    $('#cb-login-screen').classList.remove('hidden');
+    const card = $('#cb-login-card');
+    const isRegister = state.loginMode === 'register';
+    card.innerHTML = `
+      <div class="cb-login-logo"><span class="dot"></span>Callboard</div>
+      <div class="cb-login-sub">${isRegister ? 'Create your account to join the team workspace.' : 'Log in to your shared team workspace.'}</div>
+      <div class="cb-login-error" id="cb-login-error"></div>
+      <div class="cb-login-field">
+        <label>Your Name</label>
+        <input id="cb-login-name" placeholder="e.g. Priya" autocomplete="off" />
+      </div>
+      <div class="cb-login-field">
+        <label>PIN ${isRegister ? '(4+ digits, you choose it)' : ''}</label>
+        <input id="cb-login-pin" type="password" inputmode="numeric" placeholder="••••" autocomplete="off" />
+      </div>
+      <button class="cb-btn cb-btn-primary" id="cb-login-submit" style="width:100%;">${isRegister ? 'Create Account' : 'Log In'}</button>
+      <div class="cb-login-toggle">
+        ${isRegister ? `Already have an account? <a id="cb-login-swap">Log in</a>` : `New to this workspace? <a id="cb-login-swap">Create an account</a>`}
+      </div>
+    `;
+    $('#cb-login-swap').addEventListener('click', () => {
+      state.loginMode = isRegister ? 'login' : 'register';
+      render();
+    });
+
+    const submit = async () => {
+      const name = $('#cb-login-name').value;
+      const pin = $('#cb-login-pin').value.trim();
+      const errEl = $('#cb-login-error');
+      errEl.textContent = '';
+
+      if (isRegister) {
+        if (!name.trim() || pin.length < 4) { errEl.textContent = 'Enter a name and a PIN of at least 4 digits.'; return; }
+        try {
+          const res = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, pin })
+          });
+          const data = await res.json();
+          if (res.ok) {
+            localStorage.setItem('cb-session-userid', data.user.id);
+            state.currentUser = data.user;
+            toast(`Welcome, ${data.user.name}${data.user.role === 'admin' ? ' — you\'re the admin' : ''}`);
+            await loadData();
+          } else {
+            errEl.textContent = data.error;
+          }
+        } catch (e) {
+          errEl.textContent = 'Connection error registering user.';
+        }
+      } else {
+        if (!name.trim() || !pin) { errEl.textContent = 'Enter your name and PIN.'; return; }
+        try {
+          const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, pin })
+          });
+          const data = await res.json();
+          if (res.ok) {
+            localStorage.setItem('cb-session-userid', data.user.id);
+            state.currentUser = data.user;
+            await loadData();
+          } else {
+            errEl.textContent = data.error;
+          }
+        } catch (e) {
+          errEl.textContent = 'Connection error logging in.';
+        }
+      }
+    };
+
+    $('#cb-login-submit').addEventListener('click', submit);
+    $('#cb-login-pin').addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
+  }
+
+  function renderUserBadge() {
+    const u = state.currentUser;
+    if (!u) return;
+    const initials = u.name.trim().split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase();
+    $('#cb-user-badge').innerHTML = `
+      <span class="cb-avatar">${initials}</span>
+      <span>
+        <div style="font-weight:600; line-height: 1.2;">${escapeHtml(u.name)}</div>
+        <div class="cb-role-tag">${u.role}</div>
+      </span>
+      <button class="cb-btn cb-btn-ghost" id="cb-logout-btn" style="padding:4px 8px; font-size:11.5px; margin-left: 6px;">Log out</button>
+    `;
+    $('#cb-logout-btn').addEventListener('click', logout);
+    $('#cb-admin-btn').style.display = u.role === 'admin' ? '' : 'none';
+  }
+
+  async function openAdminPanel() {
+    $('#cb-admin-overlay').classList.add('open');
+    await loadUsers();
+    await loadActivityLog();
+    renderAdminPanel();
+  }
+  function closeAdminPanel() {
+    $('#cb-admin-overlay').classList.remove('open');
+  }
+  function renderAdminPanel() {
+    const overlay = $('#cb-admin-overlay');
+    if (!overlay.classList.contains('open')) return;
+    const modal = $('#cb-admin-modal');
+    const tab = state.adminTab;
+    modal.innerHTML = `
+      <h3>Admin Settings</h3>
+      <div class="cb-modal-sub">Manage active team callers and view CRM modifications audit log.</div>
+      <div class="cb-admin-tabs">
+        <div class="cb-admin-tab ${tab === 'team' ? 'active' : ''}" data-tab="team">Team (${state.users.length})</div>
+        <div class="cb-admin-tab ${tab === 'activity' ? 'active' : ''}" data-tab="activity">Activity Log</div>
+      </div>
+      <div id="cb-admin-tab-body"></div>
+      <div style="display:flex; justify-content:flex-end; margin-top:20px;">
+        <button class="cb-btn cb-btn-ghost" id="cb-admin-close">Close</button>
+      </div>
+    `;
+    $$('.cb-admin-tab').forEach(t => t.addEventListener('click', () => { state.adminTab = t.dataset.tab; renderAdminPanel(); }));
+    $('#cb-admin-close').addEventListener('click', closeAdminPanel);
+    const body = $('#cb-admin-tab-body');
+    if (tab === 'team') {
+      body.innerHTML = `
+        <table class="cb-admin-table">
+          <thead><tr><th>Name</th><th>Role</th><th>Status</th><th>Joined</th><th></th></tr></thead>
+          <tbody>
+            ${state.users.map(u => `
+              <tr>
+                <td>${escapeHtml(u.name)}${u.id === state.currentUser.id ? ' <span style="color:var(--text-dim);">(you)</span>' : ''}</td>
+                <td><span class="cb-role-pill ${u.role === 'caller' ? 'caller' : ''}">${u.role}</span></td>
+                <td>${u.active ? 'Active' : '<span style="color:var(--red); font-weight:600;">Deactivated</span>'}</td>
+                <td class="mono" style="font-size:11px; color:var(--text-muted);">${fmtDate((u.createdAt || '').slice(0,10))}</td>
+                <td style="text-align:right; white-space:nowrap;">
+                  ${u.id !== state.currentUser.id ? `
+                    <button class="cb-inline-btn" data-action="role" data-id="${u.id}">${u.role === 'admin' ? 'Make Caller' : 'Make Admin'}</button>
+                    <button class="cb-inline-btn" data-action="toggle-active" data-id="${u.id}">${u.active ? 'Deactivate' : 'Reactivate'}</button>
+                    <button class="cb-inline-btn" data-action="reset-pin" data-id="${u.id}">Reset PIN</button>
+                  ` : `<span style="color:var(--text-dim); font-size:11.5px;">—</span>`}
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <div style="margin-top:16px; font-size:12px; color:var(--text-dim);">Share this app page URL with teammates so they can sign up directly. Newly registered accounts join as a caller by default.</div>
+      `;
+      body.querySelectorAll('[data-action]').forEach(btn => btn.addEventListener('click', () => handleAdminUserAction(btn.dataset.action, btn.dataset.id)));
+    } else {
+      body.innerHTML = state.activityLog.length ? state.activityLog.map(a => `
+        <div class="cb-activity-item">
+          <div><b>${escapeHtml(a.userName)}</b> — ${escapeHtml(a.action)}${a.detail ? ': ' + escapeHtml(a.detail) : ''}</div>
+          <div class="cb-act-meta">${fmtDateTime(a.ts)}</div>
+        </div>
+      `).join('') : `<div style="color:var(--text-dim); font-size:12.5px; padding:10px 0;">No activity logged yet.</div>`;
+    }
+  }
+
+  function renderStatsStrip() {
+    const total = state.contacts.length;
+    const dueToday = state.contacts.filter(isDueToday).length;
+    const overdue = state.contacts.filter(isOverdue).length;
+    const totalCalls = state.contacts.reduce((s, c) => s + (c.calls ? c.calls.length : 0), 0);
+    $('#cb-stats-strip').innerHTML = `
+      <span><b>${total}</b> contacts</span>
+      <span><b style="color:var(--amber)">${dueToday}</b> due today</span>
+      <span><b style="color:var(--red)">${overdue}</b> overdue</span>
+      <span><b>${totalCalls}</b> touches logged</span>
+    `;
+  }
+
+  function renderSidebar() {
+    const dueToday = state.contacts.filter(isDueToday).length;
+    const overdue = state.contacts.filter(isOverdue).length;
+    const newCount = state.contacts.filter(c => c.status === 'new').length;
+    const queueRows = [
+      { key: null, label: 'All Contacts', count: state.contacts.length, color: 'var(--gray)' },
+      { key: 'overdue', label: 'Overdue', count: overdue, color: 'var(--red)' },
+      { key: 'due_today', label: 'Due Today', count: dueToday, color: 'var(--amber)' },
+      { key: 'new', label: 'Not Yet Contacted', count: newCount, color: 'var(--gray)' },
+    ];
+    $('#cb-queue-list').innerHTML = queueRows.map(r => `
+      <div class="cb-filter-row ${state.queueFilter === r.key && !state.nicheFilter ? 'active' : ''}" data-queue="${r.key || ''}">
+        <div class="cb-frow-left">
+          <span class="cb-signal ${r.key==='overdue' && r.count>0 ? 'pulse':''}" style="background:${r.color}"></span>
+          <span class="cb-frow-name">${r.label}</span>
+        </div>
+        <span class="cb-frow-count">${r.count}</span>
+      </div>
+    `).join('');
+
+    const niches = nicheList();
+    if (!niches.length) {
+      $('#cb-niche-list').innerHTML = `<div style="padding:8px 12px; color:var(--text-dim); font-size:12px;">Import or create contacts to populate niches.</div>`;
+    } else {
+      $('#cb-niche-list').innerHTML = niches.map(n => {
+        const ratio = nicheContactedRatio(n.name);
+        return `
+        <div class="cb-filter-row ${state.nicheFilter === n.name ? 'active' : ''}" data-niche="${escapeHtml(n.name)}">
+          <div class="cb-frow-left"><span class="cb-frow-name">${escapeHtml(n.name)}</span></div>
+          <span class="cb-frow-count">${n.count}</span>
+        </div>
+        <div class="cb-niche-bar"><div class="cb-niche-bar-fill" style="width:${Math.round(ratio*100)}%"></div></div>
+        `;
+      }).join('');
+    }
+
+    $$('#cb-queue-list [data-queue]').forEach(el => el.addEventListener('click', () => {
+      state.queueFilter = el.dataset.queue || null;
+      state.nicheFilter = null;
+      render();
+    }));
+    $$('#cb-niche-list [data-niche]').forEach(el => el.addEventListener('click', () => {
+      state.nicheFilter = el.dataset.niche;
+      state.queueFilter = null;
+      render();
+    }));
+  }
+
+  function renderToolbar() {
+    let title = 'All Contacts';
+    if (state.nicheFilter) title = state.nicheFilter;
+    else if (state.queueFilter === 'overdue') title = 'Overdue Follow-ups';
+    else if (state.queueFilter === 'due_today') title = 'Due Today';
+    else if (state.queueFilter === 'new') title = 'Not Yet Contacted';
+    $('#cb-toolbar-title').textContent = title;
+    const list = filteredContacts();
+    $('#cb-toolbar-sub').textContent = `${list.length} contact${list.length === 1 ? '' : 's'}`;
+
+    const statuses = Object.keys(STATUS_META);
+    $('#cb-status-filters').innerHTML = statuses.map(s => `
+      <button class="cb-status-chip ${state.statusFilter === s ? 'active' : ''}" data-status="${s}">${STATUS_META[s].label}</button>
+    `).join('');
+    $$('#cb-status-filters [data-status]').forEach(el => el.addEventListener('click', () => {
+      state.statusFilter = state.statusFilter === el.dataset.status ? null : el.dataset.status;
+      render();
+    }));
+  }
+
+  function renderTable() {
+    const list = filteredContacts();
+    const wrap = $('#cb-table-wrap');
+    if (!state.contacts.length) {
+      wrap.innerHTML = `<div class="cb-empty">
+        <b>No contacts yet</b>
+        <div>Import your CSV of leads or create a new contact manually to begin.</div>
+        <div style="display: flex; gap: 8px; margin-top: 8px;">
+          <button class="cb-btn cb-btn-primary" id="cb-empty-import">Import CSV</button>
+          <button class="cb-btn cb-btn-primary" id="cb-empty-add">+ Add Contact</button>
+        </div>
+      </div>`;
+      $('#cb-empty-import').addEventListener('click', openImportModal);
+      $('#cb-empty-add').addEventListener('click', openAddContactModal);
+      return;
+    }
+    if (!list.length) {
+      wrap.innerHTML = `<div class="cb-empty"><b>No matches</b><div>Try adjusting your filters or search term.</div></div>`;
+      return;
+    }
+    wrap.innerHTML = `
+      <table id="cb-table">
+        <thead><tr>
+          <th></th><th>Name</th><th>Company</th><th>Niche</th><th>Phone</th><th>Status</th><th>Next Follow-up</th>
+        </tr></thead>
+        <tbody>
+          ${list.map(c => `
+            <tr data-id="${c.id}" class="${state.selectedId === c.id ? 'selected' : ''}">
+              <td style="width:20px;"><span class="cb-signal ${isOverdue(c) ? 'pulse' : ''}" style="background:${signalColorFor(c)}"></span></td>
+              <td class="cb-name-cell">${escapeHtml(c.name || 'Unnamed')}</td>
+              <td class="cb-company-cell">${escapeHtml(c.company || '—')}</td>
+              <td><span class="cb-niche-tag">${escapeHtml(c.niche || 'Uncategorized')}</span></td>
+              <td class="mono" style="color:var(--text-muted); font-size:12.5px;">${escapeHtml(c.phone || '—')}</td>
+              <td><span class="cb-badge" style="background:${STATUS_META[c.status].dim}; color:${STATUS_META[c.status].color}">${STATUS_META[c.status].label}</span></td>
+              <td class="mono" style="font-size:12px; color:${isOverdue(c) ? 'var(--red)' : isDueToday(c) ? 'var(--amber)' : 'var(--text-muted)'}; font-weight: 600;">${fmtDate(c.nextFollowUp)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+    $$('#cb-table tbody tr').forEach(tr => tr.addEventListener('click', () => {
+      state.selectedId = tr.dataset.id;
+      render();
+    }));
+  }
+
+  function renderDrawer() {
+    const drawer = $('#cb-drawer');
+    const c = state.contacts.find(x => x.id === state.selectedId);
+    if (!c) { drawer.classList.remove('open'); drawer.innerHTML = ''; return; }
+    drawer.classList.add('open');
+    const calls = (c.calls || []).slice().sort((a, b) => b.date.localeCompare(a.date));
+    drawer.innerHTML = `
+      <div class="cb-drawer-head">
+        <div class="cb-dh-top">
+          <div>
+            <div class="cb-drawer-name">${escapeHtml(c.name || 'Unnamed')}</div>
+            <div class="cb-drawer-sub">${escapeHtml(c.company || '')}</div>
+          </div>
+          <button class="cb-drawer-close" id="cb-drawer-close">✕</button>
+        </div>
+      </div>
+      <div class="cb-drawer-section">
+        <div class="cb-drawer-label">Details</div>
+        <div class="cb-field-row"><span class="cb-field-ico">☎</span><span class="mono">${escapeHtml(c.phone || '—')}</span></div>
+        <div class="cb-field-row"><span class="cb-field-ico">✉</span><span>${escapeHtml(c.email || '—')}</span></div>
+        <div class="cb-field-row"><span class="cb-field-ico">◆</span><span class="cb-niche-tag">${escapeHtml(c.niche || 'Uncategorized')}</span></div>
+        ${c.address ? `<div class="cb-field-row"><span class="cb-field-ico">⌂</span><span>${escapeHtml(c.address)}</span></div>` : ''}
+      </div>
+      <div class="cb-drawer-section">
+        <div class="cb-drawer-label">Follow-up Sequence</div>
+        ${renderSequenceTracker(c)}
+      </div>
+      <div class="cb-drawer-section">
+        <div class="cb-drawer-label">Status &amp; Follow-up</div>
+        <div class="cb-field-row">
+          <select class="cb-select-full" id="cb-status-select">
+            ${Object.keys(STATUS_META).map(s => `<option value="${s}" ${c.status === s ? 'selected' : ''}>${STATUS_META[s].label}</option>`).join('')}
+          </select>
+        </div>
+        <div class="cb-field-row">
+          <span class="cb-field-ico">📅</span>
+          <input type="date" id="cb-followup-input" value="${c.nextFollowUp || ''}" style="flex:1;" />
+        </div>
+      </div>
+      <div class="cb-drawer-section">
+        <div class="cb-drawer-label">Log a Touch</div>
+        <div class="cb-field-row">
+          <select class="cb-select-full" id="cb-channel-select">
+            ${CHANNEL_OPTIONS.map(ch => `<option value="${ch}">${CHANNEL_ICON[ch]} ${ch}</option>`).join('')}
+          </select>
+        </div>
+        <select class="cb-select-full" id="cb-outcome-select" style="margin-bottom: 8px;"></select>
+        <textarea id="cb-call-notes" placeholder="Notes from this touch…"></textarea>
+        <button class="cb-btn cb-btn-primary" id="cb-log-call-btn" style="width:100%; margin-top:8px;">Log Touch</button>
+      </div>
+      <div class="cb-drawer-section" style="border-bottom:none; flex:1;">
+        <div class="cb-drawer-label">Touch History (${calls.length})</div>
+        ${calls.length ? calls.map(l => `
+          <div class="cb-log-item">
+            <div class="cb-log-top">
+              <span style="font-weight:700;">${CHANNEL_ICON[l.channel || 'Call'] || '☎'} ${escapeHtml(l.outcome)}</span>
+              <span class="cb-log-date">${fmtDateTime(l.date)}</span>
+            </div>
+            ${l.notes ? `<div class="cb-log-note">${escapeHtml(l.notes)}</div>` : ''}
+          </div>
+        `).join('') : `<div style="color:var(--text-dim); font-size:12.5px;">No touches logged yet.</div>`}
+      </div>
+      <div class="cb-drawer-section" style="border-bottom:none;">
+        <button class="cb-btn cb-btn-ghost" id="cb-delete-contact" style="color:var(--red); width:100%; font-weight: 600;">Delete Contact</button>
+      </div>
+    `;
+
+    $('#cb-drawer-close').addEventListener('click', () => { state.selectedId = null; render(); });
+    $('#cb-status-select').addEventListener('change', async (e) => {
+      c.status = e.target.value;
+      await updateContactOnServer(c);
+    });
+    $('#cb-followup-input').addEventListener('change', async (e) => {
+      c.nextFollowUp = e.target.value || null;
+      await updateContactOnServer(c);
+    });
+    const outcomeSelect = $('#cb-outcome-select');
+    const channelSelect = $('#cb-channel-select');
+    function populateOutcomes() {
+      const opts = CHANNEL_OUTCOMES[channelSelect.value] || OUTCOME_OPTIONS;
+      outcomeSelect.innerHTML = opts.map(o => `<option value="${o}">${o}</option>`).join('');
+    }
+    populateOutcomes();
+    channelSelect.addEventListener('change', populateOutcomes);
+    $$('.cb-seq-apply-date').forEach(btn => btn.addEventListener('click', async () => {
+      c.nextFollowUp = btn.dataset.date;
+      await updateContactOnServer(c);
+      toast('Follow-up date set');
+    }));
+    $('#cb-log-call-btn').addEventListener('click', async () => {
+      const channel = channelSelect.value;
+      const outcome = outcomeSelect.value;
+      const notes = $('#cb-call-notes').value.trim();
+      
+      if (channel === 'Call') {
+        const lastCall = c.calls.slice().reverse().find(t => (t.channel || 'Call') === 'Call');
+        if (lastCall) {
+          const daysSince = (Date.now() - new Date(lastCall.date).getTime()) / 86400000;
+          if (daysSince < 3) {
+            const proceed = confirm(`This contact was called ${Math.round(daysSince * 10) / 10} day(s) ago. Log another call anyway?`);
+            if (!proceed) return;
+          }
+        }
+      }
+      
+      await logTouchOnServer(c.id, channel, outcome, notes);
+    });
+    $('#cb-delete-contact').addEventListener('click', async () => {
+      if (!confirm(`Delete ${c.name || 'this contact'}? This cannot be undone.`)) return;
+      await deleteContactOnServer(c.id);
+    });
+  }
+
+  function renderSequenceTracker(c) {
+    const { done, next, suggestedDate } = sequenceProgress(c);
+    const steps = SEQUENCE_TEMPLATE.map((s, i) => {
+      const isDone = i < done;
+      const isNext = i === done;
+      return `
+        <div style="display:flex; align-items:center; gap:8px; padding:4px 0;">
+          <span style="width:18px; height:18px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700;
+            background:${isDone ? 'var(--green)' : isNext ? 'var(--amber)' : 'var(--surface-3)'};
+            color:${isDone || isNext ? '#fff' : 'var(--text-dim)'};">
+            ${isDone ? '✓' : s.step}
+          </span>
+          <span style="font-size:12.5px; color:${isDone ? 'var(--text-muted)' : isNext ? 'var(--text)' : 'var(--text-dim)'}; font-weight:${isNext ? '700' : '400'};">
+            ${s.label}
+          </span>
+        </div>
+      `;
+    }).join('');
+    let suggestion = '';
+    if (next) {
+      suggestion = `
+        <div style="margin-top:8px; padding:10px; background:var(--amber-dim); border-radius:var(--radius); font-size:12px; color:var(--text); border: 1px solid rgba(217, 119, 6, 0.15)">
+          Next: <b>${next.label}</b> — suggest <b class="mono">${fmtDate(suggestedDate)}</b>
+          <button class="cb-btn cb-btn-ghost cb-seq-apply-date" data-date="${suggestedDate}" style="display:block; margin-top:6px; padding:4px 8px; font-size:11.5px; color:var(--amber); font-weight: 700;">Set follow-up date</button>
+        </div>
+      `;
+    } else {
+      suggestion = `<div style="margin-top:8px; font-size:12px; color:var(--text-dim);">Sequence complete — no more touches suggested.</div>`;
+    }
+    return `<div>${steps}</div>${suggestion}`;
+  }
+
+  // --- ADD CONTACT MODAL ---
+
+  function openAddContactModal() {
+    const overlay = $('#cb-modal-overlay');
+    const modal = $('#cb-modal');
+    modal.innerHTML = `
+      <h3>Create New Contact</h3>
+      <div class="cb-modal-sub">Add a new lead directly to the database.</div>
+      <div style="display:flex; flex-direction:column; gap:12px; max-width:100%;">
+        <div style="display:flex; gap:10px;">
+          <div style="flex:1;">
+            <label style="font-size:12px; font-weight:600; color:var(--text-muted); display:block; margin-bottom:4px;">Name *</label>
+            <input id="cb-new-name" placeholder="John Doe" style="width:100%;" required />
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:12px; font-weight:600; color:var(--text-muted); display:block; margin-bottom:4px;">Company</label>
+            <input id="cb-new-company" placeholder="Acme Corp" style="width:100%;" />
+          </div>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <div style="flex:1;">
+            <label style="font-size:12px; font-weight:600; color:var(--text-muted); display:block; margin-bottom:4px;">Niche</label>
+            <input id="cb-new-niche" placeholder="Tech / Finance / Healthcare" style="width:100%;" />
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:12px; font-weight:600; color:var(--text-muted); display:block; margin-bottom:4px;">Phone</label>
+            <input id="cb-new-phone" placeholder="+1 (555) 000-0000" style="width:100%;" />
+          </div>
+        </div>
+        <div>
+          <label style="font-size:12px; font-weight:600; color:var(--text-muted); display:block; margin-bottom:4px;">Email</label>
+          <input id="cb-new-email" type="email" placeholder="john@example.com" style="width:100%;" />
+        </div>
+        <div>
+          <label style="font-size:12px; font-weight:600; color:var(--text-muted); display:block; margin-bottom:4px;">Address</label>
+          <input id="cb-new-address" placeholder="123 Main St, New York, NY" style="width:100%;" />
+        </div>
+        <div>
+          <label style="font-size:12px; font-weight:600; color:var(--text-muted); display:block; margin-bottom:4px;">Notes</label>
+          <textarea id="cb-new-notes" placeholder="Initial context or remarks..." style="width:100%; min-height:80px;"></textarea>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <div style="flex:1;">
+            <label style="font-size:12px; font-weight:600; color:var(--text-muted); display:block; margin-bottom:4px;">Status</label>
+            <select id="cb-new-status" style="width:100%;">
+              ${Object.keys(STATUS_META).map(s => `<option value="${s}">${STATUS_META[s].label}</option>`).join('')}
+            </select>
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:12px; font-weight:600; color:var(--text-muted); display:block; margin-bottom:4px;">Next Follow-up Date</label>
+            <input id="cb-new-followup" type="date" style="width:100%;" />
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px;">
+        <button class="cb-btn cb-btn-ghost" id="cb-new-cancel">Cancel</button>
+        <button class="cb-btn cb-btn-primary" id="cb-new-submit">Create Contact</button>
+      </div>
+    `;
+    overlay.classList.add('open');
+    $('#cb-new-cancel').addEventListener('click', closeModal);
+    $('#cb-new-submit').addEventListener('click', async () => {
+      const name = $('#cb-new-name').value.trim();
+      if (!name) { toast('Name is required'); return; }
+
+      const contact = {
+        name,
+        company: $('#cb-new-company').value.trim(),
+        niche: $('#cb-new-niche').value.trim() || 'Uncategorized',
+        phone: $('#cb-new-phone').value.trim(),
+        email: $('#cb-new-email').value.trim(),
+        address: $('#cb-new-address').value.trim(),
+        notes: $('#cb-new-notes').value.trim(),
+        status: $('#cb-new-status').value,
+        nextFollowUp: $('#cb-new-followup').value || null
+      };
+
+      await createContactOnServer(contact);
+    });
+  }
+
+  // --- SEARCH ---
+
+  $('#cb-search-input').addEventListener('input', (e) => {
+    state.search = e.target.value;
+    render();
+  });
+
+  // --- EXPORT ---
+
+  $('#cb-export-btn').addEventListener('click', () => {
+    if (!state.contacts.length) { toast('No contacts to export'); return; }
+    const rows = state.contacts.map(c => ({
+      Name: c.name || '', Company: c.company || '', Niche: c.niche || '', Phone: c.phone || '',
+      Email: c.email || '', Address: c.address || '', Status: STATUS_META[c.status].label,
+      NextFollowUp: c.nextFollowUp || '', TouchesLogged: (c.calls || []).length,
+      LastTouchOutcome: (c.calls && c.calls.length) ? c.calls[c.calls.length - 1].outcome : '',
+      Notes: c.notes || ''
+    }));
+    const csv = Papa.unparse(rows);
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'callboard-export.csv'; a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  // --- CSV IMPORT ---
+
+  const FIELD_TARGETS = [
+    { key: 'name', label: 'Name', patterns: ['name', 'contact', 'full name', 'client'] },
+    { key: 'company', label: 'Company', patterns: ['company', 'business', 'organization', 'org'] },
+    { key: 'niche', label: 'Niche', patterns: ['niche', 'industry', 'category', 'vertical', 'sector'] },
+    { key: 'phone', label: 'Phone', patterns: ['phone', 'mobile', 'tel', 'number'] },
+    { key: 'email', label: 'Email', patterns: ['email', 'e-mail'] },
+    { key: 'address', label: 'Address', patterns: ['address', 'location', 'city', 'state'] },
+    { key: 'notes', label: 'Notes', patterns: ['notes', 'note', 'comment'] },
+  ];
+  function guessMapping(headers) {
+    const mapping = {};
+    FIELD_TARGETS.forEach(f => {
+      const hit = headers.find(h => f.patterns.some(p => h.toLowerCase().trim() === p || h.toLowerCase().trim().includes(p)));
+      mapping[f.key] = hit || '';
+    });
+    return mapping;
+  }
+
+  function openImportModal() {
+    const overlay = $('#cb-modal-overlay');
+    const modal = $('#cb-modal');
+    modal.innerHTML = `
+      <h3>Import Contacts</h3>
+      <div class="cb-modal-sub">Upload a CSV of your leads. You can map columns in the next step.</div>
+      <div id="cb-drop-zone">
+        <input type="file" accept=".csv" id="cb-file-input" style="display:none;" />
+        Drop a CSV file here, or click to browse
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:8px;">
+        <button class="cb-btn cb-btn-ghost" id="cb-modal-cancel">Cancel</button>
+      </div>
+    `;
+    overlay.classList.add('open');
+    const dz = $('#cb-drop-zone');
+    const fileInput = $('#cb-file-input');
+    dz.addEventListener('click', () => fileInput.click());
+    dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('dragover'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+    dz.addEventListener('drop', (e) => {
+      e.preventDefault(); dz.classList.remove('dragover');
+      if (e.dataTransfer.files.length) parseFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length) parseFile(e.target.files[0]);
+    });
+    $('#cb-modal-cancel').addEventListener('click', closeModal);
+  }
+
+  function parseFile(file) {
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        if (!results.data.length) { toast('CSV appears empty'); return; }
+        const headers = results.meta.fields || [];
+        state.pendingImport = { rows: results.data, headers };
+        renderMappingStep();
+      },
+      error: () => toast('Could not parse that CSV')
+    });
+  }
+
+  function renderMappingStep() {
+    const { rows, headers } = state.pendingImport;
+    const mapping = guessMapping(headers);
+    const modal = $('#cb-modal');
+    modal.innerHTML = `
+      <h3>Map Your Columns</h3>
+      <div class="cb-modal-sub">${rows.length} rows found. Match your CSV columns to contact fields — Name is required.</div>
+      <div id="cb-mapping-rows">
+        ${FIELD_TARGETS.map(f => `
+          <div class="cb-map-row">
+            <label>${f.label}${f.key === 'name' ? ' *' : ''}</label>
+            <select data-field="${f.key}">
+              <option value="">— Skip —</option>
+              ${headers.map(h => `<option value="${escapeHtml(h)}" ${mapping[f.key] === h ? 'selected' : ''}>${escapeHtml(h)}</option>`).join('')}
+            </select>
+          </div>
+        `).join('')}
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+        <button class="cb-btn cb-btn-ghost" id="cb-modal-cancel">Cancel</button>
+        <button class="cb-btn cb-btn-primary" id="cb-modal-confirm">Import ${rows.length} Contacts</button>
+      </div>
+    `;
+    $('#cb-modal-cancel').addEventListener('click', closeModal);
+    $('#cb-modal-confirm').addEventListener('click', async () => {
+      const finalMapping = {};
+      $$('#cb-mapping-rows select').forEach(sel => { finalMapping[sel.dataset.field] = sel.value; });
+      if (!finalMapping.name) { toast('Please map a Name column'); return; }
+      
+      const imported = rows.map(r => ({
+        name: (r[finalMapping.name] || '').trim(),
+        company: finalMapping.company ? (r[finalMapping.company] || '').trim() : '',
+        niche: finalMapping.niche ? (r[finalMapping.niche] || '').trim() || 'Uncategorized' : 'Uncategorized',
+        phone: finalMapping.phone ? (r[finalMapping.phone] || '').trim() : '',
+        email: finalMapping.email ? (r[finalMapping.email] || '').trim() : '',
+        address: finalMapping.address ? (r[finalMapping.address] || '').trim() : '',
+        notes: finalMapping.notes ? (r[finalMapping.notes] || '').trim() : '',
+        status: 'new',
+        nextFollowUp: null,
+      })).filter(c => c.name);
+
+      await importContactsOnServer(imported);
+    });
+  }
+
+  function closeModal() {
+    $('#cb-modal-overlay').classList.remove('open');
+    state.pendingImport = null;
+  }
+
+  // --- EVENT LISTENERS ---
+
+  $('#cb-import-btn').addEventListener('click', openImportModal);
+  $('#cb-add-contact-btn').addEventListener('click', openAddContactModal);
+  $('#cb-modal-overlay').addEventListener('click', (e) => { if (e.target.id === 'cb-modal-overlay') closeModal(); });
+  $('#cb-admin-btn').addEventListener('click', openAdminPanel);
+  $('#cb-admin-overlay').addEventListener('click', (e) => { if (e.target.id === 'cb-admin-overlay') closeAdminPanel(); });
+
+  // --- INITIALIZE ---
+
+  async function init() {
+    const hasSession = await checkSession();
+    if (hasSession) {
+      await loadData();
+    } else {
+      render();
+    }
+  }
+  init();
+})();
+</script>
+</body>
+</html>
