@@ -608,17 +608,15 @@
       try {
         state.supabaseClient = window.supabase.createClient(state.supabaseUrl, state.supabaseKey);
         state.dbConnected = true;
-        updateDbStatusBadge();
-        await loadData();
       } catch (e) {
         state.dbConnected = false;
-        updateDbStatusBadge();
       }
     } else {
       state.supabaseClient = null;
       state.dbConnected = false;
-      updateDbStatusBadge();
     }
+    updateDbStatusBadge();
+    await loadData();
   }
   function updateDbStatusBadge() {
     const b = $('#cb-db-status-badge');
