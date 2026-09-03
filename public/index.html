@@ -582,6 +582,39 @@
     }
   }
 
+  function formatWebsiteUrl(urlStr) {
+    if (!urlStr) return null;
+    let str = String(urlStr).trim();
+    if (!str) return null;
+
+    // 1. If it contains a domain (e.g. example.com, www.example.com, https://domain.com)
+    const domainMatch = str.match(/(?:https?:\/\/)?(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(?::\d+)?(?:\/[^\s]*)?/i);
+    if (domainMatch) {
+      let clean = domainMatch[0].trim();
+      if (!/^https?:\/\//i.test(clean)) clean = 'https://' + clean;
+      return clean;
+    }
+
+    // 2. If it's a category/title string without domain (e.g. "ladies suits /#792857 - Tanishicrafts")
+    const parts = str.split(/[-/#]/).map(p => p.trim()).filter(Boolean);
+    const keyword = parts[parts.length - 1] || str;
+    return 'https://www.google.com/search?q=' + encodeURIComponent(keyword);
+  }
+
+  function getDisplayWebsite(urlStr) {
+    if (!urlStr) return '—';
+    let str = String(urlStr).trim();
+    if (!str) return '—';
+
+    const domainMatch = str.match(/(?:https?:\/\/)?(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}/i);
+    if (domainMatch) {
+      return domainMatch[0].replace(/^https?:\/\//i, '').replace(/^www\./i, '');
+    }
+
+    const parts = str.split(/[-/#]/).map(p => p.trim()).filter(Boolean);
+    return parts[parts.length - 1] || str;
+  }
+
   async function loadData() {
     if (state.supabaseClient) {
       try {
@@ -1054,8 +1087,8 @@
           ${list.map(c => {
             const newFlag = isNewLead(c);
             const isChecked = state.selectedIds.has(c.id);
-            const web = c.website ? (c.website.startsWith('http') ? c.website : 'https://' + c.website) : null;
-            const webDisplay = c.website ? c.website.replace(/^https?:\/\//i, '').replace(/\/.*$/, '') : '—';
+            const webUrl = formatWebsiteUrl(c.website);
+            const webDisplay = getDisplayWebsite(c.website);
             const locationStr = [c.state, c.country].filter(Boolean).join(', ') || '—';
 
             return `
@@ -1064,7 +1097,7 @@
               <td><span class="cb-signal ${isOverdue(c) ? 'pulse' : ''}" style="background:${signalColorFor(c)}"></span></td>
               <td class="cb-name-cell">${escapeHtml(c.name || 'Unnamed')} ${newFlag ? '<span class="cb-new-tag">NEW</span>' : ''}</td>
               <td class="cb-company-cell">${escapeHtml(c.company || '—')}</td>
-              <td>${web ? `<a href="${escapeHtml(web)}" target="_blank" class="cb-website-link" onclick="event.stopPropagation()">🌐 ${escapeHtml(webDisplay)}</a>` : '<span style="color:var(--text-dim);">—</span>'}</td>
+              <td>${webUrl ? `<a href="${escapeHtml(webUrl)}" target="_blank" class="cb-website-link" onclick="event.stopPropagation()">🌐 ${escapeHtml(webDisplay)}</a>` : '<span style="color:var(--text-dim);">—</span>'}</td>
               <td><span class="cb-niche-tag">${escapeHtml(c.niche || 'Uncategorized')}</span></td>
               <td><span class="cb-location-tag">${escapeHtml(locationStr)}</span></td>
               <td>${(c.tags||[]).map(t => `<span class="cb-tag-pill">${escapeHtml(t)}</span>`).join('') || '<span style="color:var(--text-dim);">—</span>'}</td>
@@ -1154,7 +1187,8 @@
     drawer.classList.add('open');
     const calls = (c.calls || []).slice().sort((a, b) => b.date.localeCompare(a.date));
 
-    const web = c.website ? (c.website.startsWith('http') ? c.website : 'https://' + c.website) : null;
+    const webUrl = formatWebsiteUrl(c.website);
+    const webDisplay = getDisplayWebsite(c.website);
 
     drawer.innerHTML = `
       <div class="cb-drawer-head">
@@ -1170,7 +1204,7 @@
         <div class="cb-drawer-label">Contact & Location Info</div>
         <div class="cb-field-row"><span class="cb-field-ico">☎</span><span class="mono">${escapeHtml(c.phone || '—')}</span></div>
         <div class="cb-field-row"><span class="cb-field-ico">✉</span><span>${escapeHtml(c.email || '—')}</span></div>
-        ${web ? `<div class="cb-field-row"><span class="cb-field-ico">🌐</span><a href="${escapeHtml(web)}" target="_blank" class="cb-website-link">${escapeHtml(c.website)}</a></div>` : ''}
+        ${webUrl ? `<div class="cb-field-row"><span class="cb-field-ico">🌐</span><a href="${escapeHtml(webUrl)}" target="_blank" class="cb-website-link">${escapeHtml(webDisplay)}</a></div>` : ''}
         <div class="cb-field-row"><span class="cb-field-ico">◆</span><span class="cb-niche-tag">${escapeHtml(c.niche || 'Uncategorized')}</span></div>
         <div class="cb-field-row"><span class="cb-field-ico">📍</span><span>${escapeHtml([c.state, c.country].filter(Boolean).join(', ') || 'No location specified')}</span></div>
         ${c.address ? `<div class="cb-field-row"><span class="cb-field-ico">⌂</span><span>${escapeHtml(c.address)}</span></div>` : ''}
