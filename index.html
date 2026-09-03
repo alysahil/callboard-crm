@@ -221,7 +221,12 @@
     border-bottom: 1px solid var(--border);
     font-weight: 700;
     z-index: 1;
+    user-select: none;
   }
+  #cb-table thead th.draggable-col { cursor: grab; }
+  #cb-table thead th.draggable-col:active { cursor: grabbing; }
+  #cb-table thead th.drag-over { border-left: 3px solid var(--amber) !important; background: var(--amber-dim) !important; }
+
   #cb-table tbody tr { cursor: pointer; border-bottom: 1px solid var(--surface-2); transition: background 0.1s; }
   #cb-table tbody tr:hover { background: var(--surface); }
   #cb-table tbody tr.selected { background: var(--surface-2); }
@@ -303,6 +308,9 @@
   #cb-drop-zone:hover { border-color: var(--amber); color: var(--text); }
   #cb-drop-zone.dragover { border-color: var(--amber); background: var(--amber-dim); }
 
+  .cb-col-config-item { display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; background: var(--surface-2); border-radius: 6px; margin-bottom: 6px; font-size: 13px; }
+  .cb-col-config-item input { margin-right: 8px; }
+
   .cb-toast {
     position: fixed; bottom: 20px; right: 20px;
     background: #1B2027; color: #FFF; border: 1px solid var(--border);
@@ -369,6 +377,7 @@
     <div class="cb-stats-strip" id="cb-stats-strip"></div>
     <div class="cb-header-actions">
       <div id="cb-db-status-badge" class="cb-db-badge offline" title="Click to configure Supabase DB">⚡ Offline Mode</div>
+      <button class="cb-btn cb-btn-ghost" id="cb-col-config-btn">⚙ Columns</button>
       <button class="cb-btn cb-btn-ghost" id="cb-export-btn">Export</button>
       <button class="cb-btn cb-btn-primary" id="cb-import-btn">Import</button>
       <button class="cb-btn cb-btn-ghost" id="cb-admin-btn" style="display:none;">Admin</button>
@@ -467,15 +476,28 @@
     { step: 5, label: "Final Touch",      channel: "Call/Email", delayDays: 14 },
   ];
 
+  const DEFAULT_COLUMNS = [
+    { key: 'name', label: 'Name', enabled: true, isCustom: false },
+    { key: 'company', label: 'Company', enabled: true, isCustom: false },
+    { key: 'website', label: 'Website', enabled: true, isCustom: false },
+    { key: 'niche', label: 'Niche', enabled: true, isCustom: false },
+    { key: 'location', label: 'Location', enabled: true, isCustom: false },
+    { key: 'tags', label: 'Tags', enabled: true, isCustom: false },
+    { key: 'phone', label: 'Phone', enabled: true, isCustom: false },
+    { key: 'status', label: 'Status', enabled: true, isCustom: false },
+    { key: 'nextFollowUp', label: 'Next Follow-up', enabled: true, isCustom: false },
+  ];
+
   let state = {
     contacts: [],
+    columns: DEFAULT_COLUMNS.slice(),
     selectedId: null,
     selectedIds: new Set(),
     nicheFilter: null,
     countryFilter: null,
     stateFilter: null,
     tagFilter: null,
-    queueFilter: null, // 'due_today' | 'overdue' | 'new' | 'new_leads'
+    queueFilter: null,
     statusFilter: null,
     sortBy: "created_desc",
     search: "",
@@ -490,6 +512,7 @@
     supabaseKey: '',
     supabaseClient: null,
     dbConnected: false,
+    draggedColIdx: null,
   };
 
   const $ = (sel, root) => (root || document).querySelector(sel);
@@ -511,7 +534,7 @@
   function isNewLead(c) {
     if (!c.createdAt) return false;
     const diff = Date.now() - new Date(c.createdAt).getTime();
-    return diff < (7 * 24 * 60 * 60 * 1000); // 7 days
+    return diff < (7 * 24 * 60 * 60 * 1000);
   }
   function sequenceProgress(c) {
     const touches = c.calls || [];
@@ -534,6 +557,33 @@
     t.textContent = msg;
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 2600);
+  }
+
+  // ---------- Column Config ----------
+  function loadColumnConfig() {
+    try {
+      const saved = localStorage.getItem('cb_columns_config');
+      if (saved) {
+        state.columns = JSON.parse(saved);
+      }
+    } catch(e) {}
+    syncCustomColumns();
+  }
+  function saveColumnConfig() {
+    try { localStorage.setItem('cb_columns_config', JSON.stringify(state.columns)); } catch(e) {}
+  }
+  function syncCustomColumns() {
+    const existingKeys = new Set(state.columns.map(col => col.key));
+    state.contacts.forEach(c => {
+      if (c.customFields) {
+        Object.keys(c.customFields).forEach(key => {
+          if (!existingKeys.has(key)) {
+            state.columns.push({ key, label: key, enabled: true, isCustom: true });
+            existingKeys.add(key);
+          }
+        });
+      }
+    });
   }
 
   // ---------- Supabase & Storage Layer ----------
@@ -587,7 +637,6 @@
     let str = String(urlStr).trim();
     if (!str) return null;
 
-    // 1. If it contains a domain (e.g. example.com, www.example.com, https://domain.com)
     const domainMatch = str.match(/(?:https?:\/\/)?(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(?::\d+)?(?:\/[^\s]*)?/i);
     if (domainMatch) {
       let clean = domainMatch[0].trim();
@@ -595,7 +644,6 @@
       return clean;
     }
 
-    // 2. If it's a category/title string without domain (e.g. "ladies suits /#792857 - Tanishicrafts")
     const parts = str.split(/[-/#]/).map(p => p.trim()).filter(Boolean);
     const keyword = parts[parts.length - 1] || str;
     return 'https://www.google.com/search?q=' + encodeURIComponent(keyword);
@@ -621,6 +669,7 @@
         const { data, error } = await state.supabaseClient.from('contacts').select('*');
         if (!error && data) {
           state.contacts = data;
+          syncCustomColumns();
           render();
           return;
         }
@@ -636,6 +685,7 @@
         if (local) state.contacts = JSON.parse(local);
       }
     } catch(e) { state.contacts = []; }
+    syncCustomColumns();
     render();
   }
 
@@ -643,7 +693,6 @@
   function saveData() {
     clearTimeout(saveTimer);
     saveTimer = setTimeout(async () => {
-      // Sync to local
       try {
         if (typeof window.storage !== 'undefined' && window.storage) {
           await window.storage.set('contacts-data', JSON.stringify(state.contacts), true);
@@ -651,7 +700,6 @@
         localStorage.setItem('contacts-data', JSON.stringify(state.contacts));
       } catch(e) {}
 
-      // Sync to Supabase if connected
       if (state.supabaseClient) {
         try {
           await state.supabaseClient.from('contacts').upsert(state.contacts, { onConflict: 'id' });
@@ -793,18 +841,19 @@
 
     if (state.search.trim()) {
       const q = state.search.trim().toLowerCase();
-      list = list.filter(c =>
-        (c.name || '').toLowerCase().includes(q) ||
-        (c.company || '').toLowerCase().includes(q) ||
-        (c.phone || '').toLowerCase().includes(q) ||
-        (c.email || '').toLowerCase().includes(q) ||
-        (c.country || '').toLowerCase().includes(q) ||
-        (c.state || '').toLowerCase().includes(q) ||
-        (c.niche || '').toLowerCase().includes(q)
-      );
+      list = list.filter(c => {
+        const customVals = Object.values(c.customFields || {}).join(' ').toLowerCase();
+        return (c.name || '').toLowerCase().includes(q) ||
+          (c.company || '').toLowerCase().includes(q) ||
+          (c.phone || '').toLowerCase().includes(q) ||
+          (c.email || '').toLowerCase().includes(q) ||
+          (c.country || '').toLowerCase().includes(q) ||
+          (c.state || '').toLowerCase().includes(q) ||
+          (c.niche || '').toLowerCase().includes(q) ||
+          customVals.includes(q);
+      });
     }
 
-    // Sorting
     list.sort((a, b) => {
       if (state.sortBy === 'name') return (a.name || '').localeCompare(b.name || '');
       if (state.sortBy === 'company') return (a.company || '').localeCompare(b.company || '');
@@ -812,7 +861,6 @@
       if (state.sortBy === 'country') return (a.country || '').localeCompare(b.country || '');
       if (state.sortBy === 'state') return (a.state || '').localeCompare(b.state || '');
       if (state.sortBy === 'created_asc') return (a.createdAt || '').localeCompare(b.createdAt || '');
-      // default: created_desc
       return (b.createdAt || '').localeCompare(a.createdAt || '');
     });
 
@@ -965,7 +1013,6 @@
       </div>
     `).join('');
 
-    // Countries
     const countries = countryList();
     $('#cb-country-list').innerHTML = countries.length ? countries.map(c => `
       <div class="cb-filter-row ${state.countryFilter === c.name ? 'active' : ''}" data-country="${escapeHtml(c.name)}">
@@ -974,7 +1021,6 @@
       </div>
     `).join('') : `<div style="padding:4px 8px; color:var(--text-dim); font-size:12px;">No country specified</div>`;
 
-    // States
     const states = stateList();
     $('#cb-state-list').innerHTML = states.length ? states.map(s => `
       <div class="cb-filter-row ${state.stateFilter === s.name ? 'active' : ''}" data-state="${escapeHtml(s.name)}">
@@ -983,7 +1029,6 @@
       </div>
     `).join('') : `<div style="padding:4px 8px; color:var(--text-dim); font-size:12px;">No state specified</div>`;
 
-    // Niches
     const niches = nicheList();
     $('#cb-niche-list').innerHTML = niches.length ? niches.map(n => {
       const ratio = nicheContactedRatio(n.name);
@@ -996,7 +1041,6 @@
       `;
     }).join('') : `<div style="padding:4px 8px; color:var(--text-dim); font-size:12px;">No niches</div>`;
 
-    // Tags
     const tags = tagList();
     $('#cb-tag-list').innerHTML = tags.length ? tags.map(t => `
       <div class="cb-filter-row ${state.tagFilter === t.name ? 'active' : ''}" data-tag="${escapeHtml(t.name)}">
@@ -1005,7 +1049,6 @@
       </div>
     `).join('') : `<div style="padding:4px 8px; color:var(--text-dim); font-size:12px;">No tags applied</div>`;
 
-    // Click handlers
     $$('#cb-queue-list [data-queue]').forEach(el => el.addEventListener('click', () => { resetFilters(); state.queueFilter = el.dataset.queue || null; render(); }));
     $$('#cb-country-list [data-country]').forEach(el => el.addEventListener('click', () => { resetFilters(); state.countryFilter = state.countryFilter === el.dataset.country ? null : el.dataset.country; render(); }));
     $$('#cb-state-list [data-state]').forEach(el => el.addEventListener('click', () => { resetFilters(); state.stateFilter = state.stateFilter === el.dataset.state ? null : el.dataset.state; render(); }));
@@ -1066,6 +1109,7 @@
       return;
     }
 
+    const visibleCols = state.columns.filter(col => col.enabled !== false);
     const allSelected = list.length > 0 && list.every(c => state.selectedIds.has(c.id));
 
     wrap.innerHTML = `
@@ -1073,42 +1117,60 @@
         <thead><tr>
           <th style="width:30px;"><input type="checkbox" id="cb-select-all" ${allSelected ? 'checked' : ''} /></th>
           <th style="width:20px;"></th>
-          <th>Name</th>
-          <th>Company</th>
-          <th>Website</th>
-          <th>Niche</th>
-          <th>Location</th>
-          <th>Tags</th>
-          <th>Phone</th>
-          <th>Status</th>
-          <th>Next Follow-up</th>
+          ${visibleCols.map((col, idx) => `
+            <th class="draggable-col" draggable="true" data-col-idx="${idx}" data-col-key="${escapeHtml(col.key)}">
+              ⋮⋮ ${escapeHtml(col.label)}
+            </th>
+          `).join('')}
         </tr></thead>
         <tbody>
           ${list.map(c => {
             const newFlag = isNewLead(c);
             const isChecked = state.selectedIds.has(c.id);
-            const webUrl = formatWebsiteUrl(c.website);
-            const webDisplay = getDisplayWebsite(c.website);
-            const locationStr = [c.state, c.country].filter(Boolean).join(', ') || '—';
 
             return `
             <tr data-id="${c.id}" class="${state.selectedId === c.id || isChecked ? 'selected' : ''}">
               <td onclick="event.stopPropagation()"><input type="checkbox" class="cb-row-check" data-id="${c.id}" ${isChecked ? 'checked' : ''} /></td>
               <td><span class="cb-signal ${isOverdue(c) ? 'pulse' : ''}" style="background:${signalColorFor(c)}"></span></td>
-              <td class="cb-name-cell">${escapeHtml(c.name || 'Unnamed')} ${newFlag ? '<span class="cb-new-tag">NEW</span>' : ''}</td>
-              <td class="cb-company-cell">${escapeHtml(c.company || '—')}</td>
-              <td>${webUrl ? `<a href="${escapeHtml(webUrl)}" target="_blank" class="cb-website-link" onclick="event.stopPropagation()">🌐 ${escapeHtml(webDisplay)}</a>` : '<span style="color:var(--text-dim);">—</span>'}</td>
-              <td><span class="cb-niche-tag">${escapeHtml(c.niche || 'Uncategorized')}</span></td>
-              <td><span class="cb-location-tag">${escapeHtml(locationStr)}</span></td>
-              <td>${(c.tags||[]).map(t => `<span class="cb-tag-pill">${escapeHtml(t)}</span>`).join('') || '<span style="color:var(--text-dim);">—</span>'}</td>
-              <td class="mono" style="color:var(--text-muted); font-size:12.5px;">${escapeHtml(c.phone || '—')}</td>
-              <td><span class="cb-badge" style="background:${STATUS_META[c.status].dim}; color:${STATUS_META[c.status].color}">${STATUS_META[c.status].label}</span></td>
-              <td class="mono" style="font-size:12px; color:${isOverdue(c) ? 'var(--red)' : isDueToday(c) ? 'var(--amber)' : 'var(--text-muted)'};">${fmtDate(c.nextFollowUp)}</td>
+              ${visibleCols.map(col => renderTableCell(c, col.key, newFlag)).join('')}
             </tr>
           `}).join('')}
         </tbody>
       </table>
     `;
+
+    // Draggable columns logic
+    $$('#cb-table thead th.draggable-col').forEach(th => {
+      th.addEventListener('dragstart', (e) => {
+        state.draggedColIdx = parseInt(th.dataset.colIdx, 10);
+        e.dataTransfer.setData('text/plain', state.draggedColIdx);
+      });
+      th.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        th.classList.add('drag-over');
+      });
+      th.addEventListener('dragleave', () => th.classList.remove('drag-over'));
+      th.addEventListener('drop', (e) => {
+        e.preventDefault();
+        th.classList.remove('drag-over');
+        const targetIdx = parseInt(th.dataset.colIdx, 10);
+        if (state.draggedColIdx !== null && state.draggedColIdx !== targetIdx) {
+          const visible = state.columns.filter(col => col.enabled !== false);
+          const draggedItem = visible[state.draggedColIdx];
+          const targetItem = visible[targetIdx];
+
+          const realFromIdx = state.columns.indexOf(draggedItem);
+          const realToIdx = state.columns.indexOf(targetItem);
+
+          if (realFromIdx !== -1 && realToIdx !== -1) {
+            state.columns.splice(realFromIdx, 1);
+            state.columns.splice(realToIdx, 0, draggedItem);
+            saveColumnConfig();
+            render();
+          }
+        }
+      });
+    });
 
     $('#cb-select-all').addEventListener('change', (e) => {
       if (e.target.checked) list.forEach(c => state.selectedIds.add(c.id));
@@ -1127,6 +1189,42 @@
       state.selectedId = tr.dataset.id;
       render();
     }));
+  }
+
+  function renderTableCell(c, key, newFlag) {
+    if (key === 'name') {
+      return `<td class="cb-name-cell">${escapeHtml(c.name || 'Unnamed')} ${newFlag ? '<span class="cb-new-tag">NEW</span>' : ''}</td>`;
+    }
+    if (key === 'company') {
+      return `<td class="cb-company-cell">${escapeHtml(c.company || '—')}</td>`;
+    }
+    if (key === 'website') {
+      const webUrl = formatWebsiteUrl(c.website);
+      const webDisplay = getDisplayWebsite(c.website);
+      return `<td>${webUrl ? `<a href="${escapeHtml(webUrl)}" target="_blank" class="cb-website-link" onclick="event.stopPropagation()">🌐 ${escapeHtml(webDisplay)}</a>` : '<span style="color:var(--text-dim);">—</span>'}</td>`;
+    }
+    if (key === 'niche') {
+      return `<td><span class="cb-niche-tag">${escapeHtml(c.niche || 'Uncategorized')}</span></td>`;
+    }
+    if (key === 'location') {
+      const locationStr = [c.state, c.country].filter(Boolean).join(', ') || '—';
+      return `<td><span class="cb-location-tag">${escapeHtml(locationStr)}</span></td>`;
+    }
+    if (key === 'tags') {
+      return `<td>${(c.tags||[]).map(t => `<span class="cb-tag-pill">${escapeHtml(t)}</span>`).join('') || '<span style="color:var(--text-dim);">—</span>'}</td>`;
+    }
+    if (key === 'phone') {
+      return `<td class="mono" style="color:var(--text-muted); font-size:12.5px;">${escapeHtml(c.phone || '—')}</td>`;
+    }
+    if (key === 'status') {
+      return `<td><span class="cb-badge" style="background:${STATUS_META[c.status].dim}; color:${STATUS_META[c.status].color}">${STATUS_META[c.status].label}</span></td>`;
+    }
+    if (key === 'nextFollowUp') {
+      return `<td class="mono" style="font-size:12px; color:${isOverdue(c) ? 'var(--red)' : isDueToday(c) ? 'var(--amber)' : 'var(--text-muted)'};">${fmtDate(c.nextFollowUp)}</td>`;
+    }
+    // Custom CSV Column Value
+    const customVal = c.customFields ? c.customFields[key] : null;
+    return `<td style="font-size:12.5px; color:var(--text-muted);">${escapeHtml(customVal || '—')}</td>`;
   }
 
   function renderBulkBar() {
@@ -1190,6 +1288,15 @@
     const webUrl = formatWebsiteUrl(c.website);
     const webDisplay = getDisplayWebsite(c.website);
 
+    const customFieldsHtml = c.customFields && Object.keys(c.customFields).length ? `
+      <div class="cb-drawer-section">
+        <div class="cb-drawer-label">Custom CSV Info</div>
+        ${Object.entries(c.customFields).map(([k, v]) => `
+          <div class="cb-field-row"><span class="cb-field-ico">🔹</span><span><b>${escapeHtml(k)}:</b> ${escapeHtml(v)}</span></div>
+        `).join('')}
+      </div>
+    ` : '';
+
     drawer.innerHTML = `
       <div class="cb-drawer-head">
         <div class="cb-dh-top">
@@ -1210,6 +1317,7 @@
         ${c.address ? `<div class="cb-field-row"><span class="cb-field-ico">⌂</span><span>${escapeHtml(c.address)}</span></div>` : ''}
         <div class="cb-field-row" style="margin-top:6px;"><span class="cb-field-ico">🏷</span><div>${(c.tags||[]).map(t => `<span class="cb-tag-pill">${escapeHtml(t)}</span>`).join('') || 'None'}</div></div>
       </div>
+      ${customFieldsHtml}
       <div class="cb-drawer-section">
         <div class="cb-drawer-label">Follow-up Sequence</div>
         ${renderSequenceTracker(c)}
@@ -1322,6 +1430,54 @@
     return `<div>${steps}</div>${suggestion}`;
   }
 
+  // ---------- Column Customization Modal ----------
+  function openColumnConfigModal() {
+    const overlay = $('#cb-modal-overlay');
+    const modal = $('#cb-modal');
+    modal.innerHTML = `
+      <h3>Customize Dashboard Columns</h3>
+      <div class="cb-modal-sub">Drag headers on the dashboard table to reorder them. Toggle checkboxes below to show/hide specific columns:</div>
+      <div style="max-height:300px; overflow-y:auto; margin-bottom:16px;">
+        ${state.columns.map((col, idx) => `
+          <div class="cb-col-config-item">
+            <label style="display:flex; align-items:center; cursor:pointer;">
+              <input type="checkbox" class="cb-col-toggle" data-key="${escapeHtml(col.key)}" ${col.enabled !== false ? 'checked' : ''} />
+              <b>${escapeHtml(col.label)}</b> ${col.isCustom ? '<span style="color:var(--amber); font-size:10.5px; margin-left:6px;">(CSV Column)</span>' : ''}
+            </label>
+          </div>
+        `).join('')}
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <button class="cb-btn cb-btn-ghost" id="cb-col-reset" style="color:var(--red);">Reset to Defaults</button>
+        <button class="cb-btn cb-btn-primary" id="cb-col-save">Done</button>
+      </div>
+    `;
+    overlay.classList.add('open');
+
+    $('#cb-col-reset').onclick = () => {
+      state.columns = DEFAULT_COLUMNS.slice();
+      syncCustomColumns();
+      saveColumnConfig();
+      closeModal();
+      toast('Columns reset to defaults');
+      render();
+    };
+
+    $('#cb-col-save').onclick = () => {
+      $$('.cb-col-toggle').forEach(chk => {
+        const key = chk.dataset.key;
+        const col = state.columns.find(c => c.key === key);
+        if (col) col.enabled = chk.checked;
+      });
+      saveColumnConfig();
+      closeModal();
+      toast('Column layout saved');
+      render();
+    };
+  }
+
+  $('#cb-col-config-btn').addEventListener('click', openColumnConfigModal);
+
   // ---------- Search ----------
   $('#cb-search-input').addEventListener('input', (e) => {
     state.search = e.target.value;
@@ -1351,13 +1507,17 @@
     `;
     overlay.classList.add('open');
 
-    const formattedRows = list.map(c => ({
-      Name: c.name || '', Company: c.company || '', Website: c.website || '',
-      Niche: c.niche || '', Phone: c.phone || '', Email: c.email || '',
-      Country: c.country || '', State: c.state || '', Address: c.address || '',
-      Tags: (c.tags || []).join(', '), Status: STATUS_META[c.status] ? STATUS_META[c.status].label : c.status,
-      NextFollowUp: c.nextFollowUp || '', DateAdded: c.createdAt || '', Notes: c.notes || ''
-    }));
+    const formattedRows = list.map(c => {
+      const base = {
+        Name: c.name || '', Company: c.company || '', Website: c.website || '',
+        Niche: c.niche || '', Phone: c.phone || '', Email: c.email || '',
+        Country: c.country || '', State: c.state || '', Address: c.address || '',
+        Tags: (c.tags || []).join(', '), Status: STATUS_META[c.status] ? STATUS_META[c.status].label : c.status,
+        NextFollowUp: c.nextFollowUp || '', DateAdded: c.createdAt || '', Notes: c.notes || ''
+      };
+      if (c.customFields) Object.assign(base, c.customFields);
+      return base;
+    });
 
     $('#cb-export-excel').onclick = () => {
       const ws = XLSX.utils.json_to_sheet(formattedRows);
@@ -1490,7 +1650,7 @@
     const modal = $('#cb-modal');
     modal.innerHTML = `
       <h3>Map Columns</h3>
-      <div class="cb-modal-sub">${rows.length} rows found. Match your file columns to Callboard lead fields:</div>
+      <div class="cb-modal-sub">${rows.length} rows found. Match your file columns to Callboard lead fields — any unmapped columns will be stored as custom dashboard fields:</div>
       <div id="cb-mapping-rows">
         ${FIELD_TARGETS.map(f => `
           <div class="cb-map-row">
@@ -1513,9 +1673,20 @@
       $$('#cb-mapping-rows select').forEach(sel => { finalMapping[sel.dataset.field] = sel.value; });
       if (!finalMapping.name) { toast('Please map a Name column'); return; }
 
+      const mappedHeaderValues = new Set(Object.values(finalMapping).filter(Boolean));
+      const unmappedHeaders = headers.filter(h => !mappedHeaderValues.has(h));
+
       const formatted = rows.map(r => {
         const tagRaw = finalMapping.tags ? r[finalMapping.tags] : '';
         const tagsArr = Array.isArray(tagRaw) ? tagRaw : (typeof tagRaw === 'string' ? tagRaw.split(',').map(t=>t.trim()).filter(Boolean) : []);
+
+        const customFields = {};
+        unmappedHeaders.forEach(h => {
+          if (r[h] !== undefined && r[h] !== null && String(r[h]).trim() !== '') {
+            customFields[h] = String(r[h]).trim();
+          }
+        });
+
         return {
           id: uid(),
           name: (r[finalMapping.name] || '').trim(),
@@ -1529,6 +1700,7 @@
           address: finalMapping.address ? (r[finalMapping.address] || '').trim() : '',
           tags: tagsArr,
           notes: finalMapping.notes ? (r[finalMapping.notes] || '').trim() : '',
+          customFields,
           status: 'new',
           nextFollowUp: null,
           calls: [],
@@ -1592,6 +1764,7 @@
         if (nw.country) ex.country = nw.country;
         if (nw.state) ex.state = nw.state;
         if (nw.niche && nw.niche !== 'Uncategorized') ex.niche = nw.niche;
+        if (nw.customFields) ex.customFields = Object.assign(ex.customFields || {}, nw.customFields);
       });
       const cleanRows = newRows.filter(r => !dupeNewIds.has(r.id));
       finalizeImport(cleanRows, `Merged ${dupes.length} duplicates and added ${cleanRows.length} new leads`);
@@ -1604,6 +1777,8 @@
 
   function finalizeImport(importedRows, customMsg) {
     state.contacts = state.contacts.concat(importedRows);
+    syncCustomColumns();
+    saveColumnConfig();
     saveData();
     addActivity('Imported leads', `${importedRows.length} leads added`);
     closeModal();
@@ -1733,6 +1908,7 @@
 
   // ---------- Init ----------
   async function init() {
+    loadColumnConfig();
     loadSupabaseConfig();
     await loadUsers();
     await loadActivityLog();
