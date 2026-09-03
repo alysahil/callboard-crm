@@ -738,6 +738,19 @@
   }
 
   async function checkSession() {
+    if (window.location.protocol.startsWith('http')) {
+      try {
+        const sess = localStorage.getItem('cb-session');
+        if (sess) {
+          const session = JSON.parse(sess);
+          const res = await fetch('/api/auth/session', { headers: { 'X-User-ID': session.userId } });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.user) { state.currentUser = data.user; return true; }
+          }
+        }
+      } catch(e) {}
+    }
     try {
       const sess = localStorage.getItem('cb-session');
       if (sess) {
@@ -755,15 +768,42 @@
     try { localStorage.removeItem('cb-session'); } catch (e) {}
   }
 
-  function attemptLogin(name, pin) {
+  async function attemptLogin(name, pin) {
+    if (window.location.protocol.startsWith('http')) {
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, pin })
+        });
+        const data = await res.json();
+        if (res.ok && data.user) return { ok: true, user: data.user };
+        if (data.error) return { ok: false, error: data.error };
+      } catch(e) {}
+    }
     const match = state.users.find(u => u.name.toLowerCase() === name.trim().toLowerCase() && u.pin === pin);
     if (!match) return { ok: false, error: 'No match for that name and PIN.' };
     if (!match.active) return { ok: false, error: 'This account has been deactivated. Ask an admin.' };
     return { ok: true, user: match };
   }
+
   async function registerUser(name, pin) {
     const trimmed = name.trim();
     if (!trimmed || pin.length < 4) return { ok: false, error: 'Enter a name and a PIN of at least 4 digits.' };
+
+    if (window.location.protocol.startsWith('http')) {
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: trimmed, pin })
+        });
+        const data = await res.json();
+        if (res.ok && data.user) return { ok: true, user: data.user };
+        if (data.error) return { ok: false, error: data.error };
+      } catch(e) {}
+    }
+
     if (state.users.find(u => u.name.toLowerCase() === trimmed.toLowerCase())) {
       return { ok: false, error: 'That name is already registered — log in instead.' };
     }

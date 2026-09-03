@@ -93,16 +93,31 @@ async function initDb() {
         id TEXT PRIMARY KEY,
         name TEXT,
         company TEXT,
+        website TEXT,
         niche TEXT,
         phone TEXT,
         email TEXT,
+        country TEXT,
+        state TEXT,
         address TEXT,
+        tags TEXT,
+        customFields TEXT,
         notes TEXT,
         status TEXT DEFAULT 'new',
         nextFollowUp TEXT,
         createdAt TEXT
       )
     `);
+
+    // Auto-migrate columns if missing
+    const colCheck = async (colName, colType) => {
+      try { await dbRun(`ALTER TABLE contacts ADD COLUMN ${colName} ${colType}`); } catch(e) {}
+    };
+    await colCheck('website', 'TEXT');
+    await colCheck('country', 'TEXT');
+    await colCheck('state', 'TEXT');
+    await colCheck('tags', 'TEXT');
+    await colCheck('customFields', 'TEXT');
 
     await dbRun(`
       CREATE TABLE IF NOT EXISTS touches (
