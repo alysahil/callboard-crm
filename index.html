@@ -651,14 +651,7 @@
     if (!urlStr) return '—';
     let str = String(urlStr).trim();
     if (!str) return '—';
-
-    const domainMatch = str.match(/(?:https?:\/\/)?(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}/i);
-    if (domainMatch) {
-      return domainMatch[0].replace(/^https?:\/\//i, '').replace(/^www\./i, '');
-    }
-
-    const parts = str.split(/[-/#]/).map(p => p.trim()).filter(Boolean);
-    return parts[parts.length - 1] || str;
+    return formatWebsiteUrl(str) || str;
   }
 
   async function loadData() {
